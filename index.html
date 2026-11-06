@@ -206,18 +206,19 @@
 
         /* Pawns Style */
         .pawn {
-            width: 82%;
-            height: 82%;
+            width: 78%;
+            height: 78%;
             border-radius: 50%;
             position: absolute;
             z-index: 25;
             cursor: pointer;
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.2s, left 0.2s;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.25s ease-out, left 0.25s ease-out, opacity 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 4px 6px rgba(0,0,0,0.4), inset 0 3px 3px rgba(255,255,255,0.7);
             border: 2px solid #ffffff;
+            will-change: transform, top, left;
         }
 
         .pawn::after {
@@ -238,198 +239,314 @@
             0% { transform: scale(1); filter: drop-shadow(0 0 4px #eab308); }
             100% { transform: scale(1.22); filter: drop-shadow(0 0 10px #f59e0b); }
         }
+
+        /* Direct On-Cell Stack Tokens Container */
+        .stack-flex-container {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 25;
+            pointer-events: none;
+            gap: 1px;
+        }
+
+        .micro-token {
+            width: 48%;
+            height: 48%;
+            border-radius: 50%;
+            border: 1.5px solid #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: transform 0.15s ease, filter 0.15s;
+        }
+
+        .micro-token:hover {
+            transform: scale(1.2);
+            z-index: 40;
+        }
+
+        .micro-token.can-move {
+            animation: pulseGlow 0.5s infinite alternate;
+            border-color: #fbbf24;
+        }
+
+        .micro-count-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #0f172a;
+            color: #ffffff;
+            font-size: 8px;
+            font-weight: 900;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255,255,255,0.8);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.6);
+        }
+
+        /* Smooth Screen Transitions */
+        .screen-view {
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+        .screen-hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.96);
+            position: absolute;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-between p-2 text-white" onclick="sound.init(); sound.startMelody();">
 
-    <!-- Header / Rules Bar -->
-    <header class="w-full max-w-md flex justify-between items-center my-1 px-1">
-        <div class="flex items-center gap-2">
-            <i class="fa-solid fa-gamepad text-yellow-400 text-xl"></i>
-            <h1 class="font-black text-lg tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500">
+    <!-- 1. INTRO LOADING SCREEN -->
+    <div id="introLoadingScreen" class="fixed inset-0 bg-slate-950 z-50 flex flex-col items-center justify-center p-6 text-center screen-view">
+        <div class="relative flex items-center justify-center mb-6">
+            <div class="w-24 h-24 rounded-full border-4 border-slate-800 border-t-yellow-400 animate-spin"></div>
+            <i class="fa-solid fa-dice text-4xl text-yellow-400 absolute"></i>
+        </div>
+        <h1 class="text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 mb-2">
+            LUDO KING DUO
+        </h1>
+        <p class="text-xs text-slate-400 mb-6 font-semibold">Loading Assets & Game Engine...</p>
+        
+        <!-- Loading Progress Bar -->
+        <div class="w-48 bg-slate-800 h-2 rounded-full overflow-hidden border border-slate-700">
+            <div id="introProgressBar" class="bg-gradient-to-r from-yellow-400 to-amber-500 h-full w-0 transition-all duration-300"></div>
+        </div>
+    </div>
+
+    <!-- 2. MAIN MENU SCREEN -->
+    <div id="mainMenuScreen" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-40 flex flex-col items-center justify-center p-6 text-center screen-view screen-hidden">
+        <div class="bg-slate-900 border-2 border-slate-700 rounded-3xl p-6 max-w-xs w-full shadow-2xl flex flex-col items-center relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-yellow-500/10 rounded-full blur-2xl"></div>
+            
+            <i class="fa-solid fa-gamepad text-5xl text-yellow-400 mb-3 animate-pulse"></i>
+            <h1 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 mb-1">
                 LUDO KING DUO
             </h1>
-        </div>
-        <div class="flex gap-2">
-            <button id="bgmToggleBtn" class="bg-slate-800 hover:bg-slate-700 p-2 rounded-full text-xs font-semibold border border-slate-600 flex items-center gap-1.5 px-3">
-                <i class="fa-solid fa-music text-green-400" id="bgmIcon"></i> <span id="bgmLabel" class="text-[10px] font-bold">Music ON</span>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-6">Red + Yellow Duo Team Edition</p>
+
+            <button onclick="startGameFromMenu()" class="w-full bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 hover:from-yellow-300 hover:to-orange-400 text-black font-black py-3 rounded-2xl text-sm shadow-lg tracking-wider flex items-center justify-center gap-2 transform active:scale-95 transition-all mb-3">
+                <i class="fa-solid fa-play text-base"></i> PLAY GAME
             </button>
-            <button id="rulesBtn" class="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-full text-xs font-bold border border-slate-600 flex items-center gap-1">
-                <i class="fa-solid fa-shield-halved text-yellow-400"></i> Rules
+
+            <button onclick="openRulesFromMenu()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-extrabold py-2.5 rounded-2xl text-xs border border-slate-700 flex items-center justify-center gap-2 mb-4">
+                <i class="fa-solid fa-shield-halved text-yellow-400"></i> Rules & How to Play
             </button>
-        </div>
-    </header>
 
-    <!-- Main Game Section -->
-    <main class="flex flex-col items-center gap-2 w-full max-w-md">
-        
-        <!-- Top Row Players (Red P1 & Green AI) -->
-        <div class="w-full flex justify-between items-center px-1">
-            <!-- Player 1 (Red - Human) -->
-            <div id="player-card-0" class="player-corner-box flex items-center gap-2 border-red-500/60">
-                <div class="relative">
-                    <div class="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center font-black text-xs text-white shadow">
-                        P1
-                    </div>
-                    <span class="absolute -top-1 -right-1 bg-yellow-400 text-[8px] text-black font-extrabold px-1 rounded-full">YOU</span>
-                </div>
-                <div class="mr-1">
-                    <p class="text-xs font-black text-red-400">Red</p>
-                    <p class="text-[9px] text-slate-300">Teammate</p>
-                </div>
-                <!-- Red Corner Dice -->
-                <div id="dice-btn-0" class="mini-dice-btn" onclick="handleCornerDiceClick(0)">
-                    <div id="mini-dice-grid-0" class="mini-dice-grid"></div>
-                    <div id="dice-num-0" class="dice-num-badge">1</div>
-                </div>
-            </div>
-
-            <!-- Player 2 (Green - AI) -->
-            <div id="player-card-1" class="player-corner-box flex items-center gap-2 border-green-500/60">
-                <!-- Green Corner Dice -->
-                <div id="dice-btn-1" class="mini-dice-btn" onclick="handleCornerDiceClick(1)">
-                    <div id="mini-dice-grid-1" class="mini-dice-grid"></div>
-                    <div id="dice-num-1" class="dice-num-badge">1</div>
-                </div>
-                <div class="ml-1 text-right">
-                    <p class="text-xs font-black text-green-400">Green</p>
-                    <p class="text-[9px] text-slate-300">Bot AI</p>
-                </div>
-                <div class="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center font-bold text-xs text-white shadow">
-                    <i class="fa-solid fa-robot"></i>
-                </div>
+            <div class="text-[9px] text-slate-500 flex items-center gap-2">
+                <span>✨ Smooth Physics</span> • <span>🎨 Color Stacks</span>
             </div>
         </div>
+    </div>
 
-        <!-- Ludo Board Container -->
-        <div class="board-wrapper rounded-2xl overflow-hidden p-0.5 bg-slate-900 border-4 border-slate-700 relative">
-            <div id="ludoBoard" class="ludo-grid">
-                <!-- Board grid cells generated dynamically via JS -->
-            </div>
-        </div>
-
-        <!-- Bottom Row Players (Blue AI & Yellow P2) -->
-        <div class="w-full flex justify-between items-center px-1">
-            <!-- Player 4 (Blue - AI) -->
-            <div id="player-card-3" class="player-corner-box flex items-center gap-2 border-blue-500/60">
-                <div class="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center font-bold text-xs text-white shadow">
-                    <i class="fa-solid fa-robot"></i>
-                </div>
-                <div class="mr-1">
-                    <p class="text-xs font-black text-blue-400">Blue</p>
-                    <p class="text-[9px] text-slate-300">Bot AI</p>
-                </div>
-                <!-- Blue Corner Dice -->
-                <div id="dice-btn-3" class="mini-dice-btn" onclick="handleCornerDiceClick(3)">
-                    <div id="mini-dice-grid-3" class="mini-dice-grid"></div>
-                    <div id="dice-num-3" class="dice-num-badge">1</div>
-                </div>
-            </div>
-
-            <!-- Player 3 (Yellow - Human) -->
-            <div id="player-card-2" class="player-corner-box flex items-center gap-2 border-yellow-500/60">
-                <!-- Yellow Corner Dice -->
-                <div id="dice-btn-2" class="mini-dice-btn" onclick="handleCornerDiceClick(2)">
-                    <div id="mini-dice-grid-2" class="mini-dice-grid"></div>
-                    <div id="dice-num-2" class="dice-num-badge">1</div>
-                </div>
-                <div class="ml-1 text-right">
-                    <p class="text-xs font-black text-yellow-400">Yellow</p>
-                    <p class="text-[9px] text-slate-300">Teammate</p>
-                </div>
-                <div class="relative">
-                    <div class="w-9 h-9 rounded-full bg-yellow-400 flex items-center justify-center font-black text-xs text-black shadow">
-                        P2
-                    </div>
-                    <span class="absolute -top-1 -left-1 bg-yellow-400 text-[8px] text-black font-extrabold px-1 rounded-full">YOU</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Bottom Status Bar -->
-        <div class="w-full bg-slate-800/95 rounded-2xl p-2.5 border border-slate-700 flex items-center justify-between shadow-lg mt-1">
-            <div>
-                <p id="turnMsg" class="text-[10px] uppercase font-extrabold tracking-wider text-slate-400">Active Turn</p>
-                <p id="turnPlayer" class="text-sm font-black text-blue-400">Blue Turn (Tap Dice)</p>
-            </div>
+    <!-- 3. GAME SCREEN CONTAINER -->
+    <div id="gameScreen" class="w-full max-w-md flex flex-col items-center justify-between min-h-screen py-1 screen-view">
+        <!-- Header / Rules Bar -->
+        <header class="w-full flex justify-between items-center my-1 px-1">
             <div class="flex items-center gap-2">
-                <div id="rolledDisplayBox" class="text-xs font-extrabold bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-700 text-yellow-400">
-                    Rolled: <span id="currentRollVal" class="text-white font-black text-sm">1</span>
-                </div>
-                <!-- Reset Board Button -->
-                <button onclick="resetGame()" class="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/40 px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all active:scale-95">
-                    <i class="fa-solid fa-rotate-right text-xs"></i> Reset
+                <button onclick="returnToMenu()" class="bg-slate-800 hover:bg-slate-700 px-2.5 py-1.5 rounded-full text-xs font-bold border border-slate-600 flex items-center gap-1">
+                    <i class="fa-solid fa-house text-yellow-400"></i>
+                </button>
+                <h1 class="font-black text-base tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500">
+                    LUDO KING DUO
+                </h1>
+            </div>
+            <div class="flex gap-2">
+                <button id="bgmToggleBtn" class="bg-slate-800 hover:bg-slate-700 p-2 rounded-full text-xs font-semibold border border-slate-600 flex items-center gap-1.5 px-3">
+                    <i class="fa-solid fa-music text-green-400" id="bgmIcon"></i> <span id="bgmLabel" class="text-[10px] font-bold">Music ON</span>
+                </button>
+                <button id="rulesBtn" class="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-full text-xs font-bold border border-slate-600 flex items-center gap-1">
+                    <i class="fa-solid fa-shield-halved text-yellow-400"></i> Rules
                 </button>
             </div>
-        </div>
+        </header>
 
-        <!-- Quests & Shop Bar -->
-        <div class="w-full grid grid-cols-2 gap-2 mt-1">
-            <!-- Red Quests & Shop -->
-            <div class="bg-slate-900/90 border border-red-500/50 rounded-xl p-2 flex justify-between items-center text-xs">
-                <div>
-                    <div class="flex items-center gap-1 font-black text-red-400 text-[11px]">
-                        <span>P1 Red</span>
-                        <span class="bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded-md border border-yellow-500/30 font-bold text-[10px]">
-                            <i class="fa-solid fa-coins"></i> <span id="redCoinsVal">50</span>
-                        </span>
+        <!-- Main Game Section -->
+        <main class="flex flex-col items-center gap-2 w-full">
+            
+            <!-- Top Row Players (Red P1 & Green AI) -->
+            <div class="w-full flex justify-between items-center px-1">
+                <!-- Player 1 (Red - Human) -->
+                <div id="player-card-0" class="player-corner-box flex items-center gap-2 border-red-500/60">
+                    <div class="relative">
+                        <div class="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center font-black text-xs text-white shadow">
+                            P1
+                        </div>
+                        <span class="absolute -top-1 -right-1 bg-yellow-400 text-[8px] text-black font-extrabold px-1 rounded-full">YOU</span>
                     </div>
-                    <p class="text-[9px] text-slate-400" id="redQuestDesc">Quest: Roll a 6 (+50 coins)</p>
-                </div>
-                <button onclick="openShop(0)" class="bg-red-500 hover:bg-red-600 text-white font-black text-[10px] px-2.5 py-1 rounded-lg border border-red-400 shadow">
-                    Shop
-                </button>
-            </div>
-
-            <!-- Yellow Quests & Shop -->
-            <div class="bg-slate-900/90 border border-yellow-500/50 rounded-xl p-2 flex justify-between items-center text-xs">
-                <div>
-                    <div class="flex items-center gap-1 font-black text-yellow-400 text-[11px]">
-                        <span>P2 Yellow</span>
-                        <span class="bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded-md border border-yellow-500/30 font-bold text-[10px]">
-                            <i class="fa-solid fa-coins"></i> <span id="yellowCoinsVal">50</span>
-                        </span>
+                    <div class="mr-1">
+                        <p class="text-xs font-black text-red-400">Red</p>
+                        <p class="text-[9px] text-slate-300">Teammate</p>
                     </div>
-                    <p class="text-[9px] text-slate-400" id="yellowQuestDesc">Quest: Roll a 6 (+50 coins)</p>
+                    <!-- Red Corner Dice -->
+                    <div id="dice-btn-0" class="mini-dice-btn" onclick="handleCornerDiceClick(0)">
+                        <div id="mini-dice-grid-0" class="mini-dice-grid"></div>
+                        <div id="dice-num-0" class="dice-num-badge">1</div>
+                    </div>
                 </div>
-                <button onclick="openShop(2)" class="bg-yellow-500 hover:bg-yellow-600 text-black font-black text-[10px] px-2.5 py-1 rounded-lg border border-yellow-400 shadow">
-                    Shop
-                </button>
-            </div>
-        </div>
 
-        <!-- Comprehensive Demo & Testing Panel -->
-        <div class="w-full bg-slate-900/95 rounded-xl p-2.5 border border-yellow-500/40 flex flex-col gap-1.5 text-center mt-1">
-            <p class="text-[10px] font-extrabold text-yellow-400 uppercase tracking-wider flex items-center justify-center gap-1">
-                <i class="fa-solid fa-flask"></i> Complete Demo & Rule Testing Panel
-            </p>
-            <div class="flex justify-center gap-1.5 flex-wrap">
-                <button onclick="testScenario('red_vs_yellow')" class="bg-slate-800 hover:bg-slate-700 text-yellow-300 text-[9px] font-extrabold px-2 py-1 rounded border border-slate-600">
-                    ⚡ Red vs Yellow Safe
-                </button>
-                <button onclick="testScenario('red_vs_green')" class="bg-slate-800 hover:bg-slate-700 text-green-300 text-[9px] font-extrabold px-2 py-1 rounded border border-slate-600">
-                    ⚡ Red vs AI Kill
-                </button>
-                <button onclick="demoFinishMatch()" class="bg-purple-900/80 hover:bg-purple-800 text-purple-200 text-[9px] font-extrabold px-2 py-1 rounded border border-purple-500/50">
-                    🏆 Demo Match Finish
-                </button>
-                <button onclick="addDemoCoins()" class="bg-yellow-900/80 hover:bg-yellow-800 text-yellow-200 text-[9px] font-extrabold px-2 py-1 rounded border border-yellow-500/50">
-                    🪙 +100 Demo Coins
-                </button>
+                <!-- Player 2 (Green - AI) -->
+                <div id="player-card-1" class="player-corner-box flex items-center gap-2 border-green-500/60">
+                    <!-- Green Corner Dice -->
+                    <div id="dice-btn-1" class="mini-dice-btn" onclick="handleCornerDiceClick(1)">
+                        <div id="mini-dice-grid-1" class="mini-dice-grid"></div>
+                        <div id="dice-num-1" class="dice-num-badge">1</div>
+                    </div>
+                    <div class="ml-1 text-right">
+                        <p class="text-xs font-black text-green-400">Green</p>
+                        <p class="text-[9px] text-slate-300">Bot AI</p>
+                    </div>
+                    <div class="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center font-bold text-xs text-white shadow">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                </div>
             </div>
-            <div class="flex justify-center items-center gap-1.5 mt-0.5">
-                <span class="text-[9px] text-slate-400 font-bold">Force Dice:</span>
-                <button onclick="forceRoll(1)" class="bg-slate-800 text-white text-[9px] font-bold px-2 py-0.5 rounded border border-slate-700">1</button>
-                <button onclick="forceRoll(6)" class="bg-slate-800 text-yellow-400 text-[9px] font-bold px-2 py-0.5 rounded border border-slate-700">6</button>
-                <span class="text-[9px] text-slate-400 font-bold ml-1">Force Turn:</span>
-                <button onclick="forceTurn(3)" class="bg-blue-500/30 text-blue-300 text-[9px] font-bold px-1.5 py-0.5 rounded border border-blue-500/50">Blue</button>
-                <button onclick="forceTurn(0)" class="bg-red-500/30 text-red-300 text-[9px] font-bold px-1.5 py-0.5 rounded border border-red-500/50">Red</button>
-                <button onclick="forceTurn(1)" class="bg-green-500/30 text-green-300 text-[9px] font-bold px-1.5 py-0.5 rounded border border-green-500/50">Green</button>
-                <button onclick="forceTurn(2)" class="bg-yellow-500/30 text-yellow-300 text-[9px] font-bold px-1.5 py-0.5 rounded border border-yellow-500/50">Yellow</button>
-            </div>
-        </div>
 
-    </main>
+            <!-- Ludo Board Container -->
+            <div class="board-wrapper rounded-2xl overflow-hidden p-0.5 bg-slate-900 border-4 border-slate-700 relative">
+                <div id="ludoBoard" class="ludo-grid">
+                    <!-- Board grid cells generated dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- Bottom Row Players (Blue AI & Yellow P2) -->
+            <div class="w-full flex justify-between items-center px-1">
+                <!-- Player 4 (Blue - AI) -->
+                <div id="player-card-3" class="player-corner-box flex items-center gap-2 border-blue-500/60">
+                    <div class="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center font-bold text-xs text-white shadow">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="mr-1">
+                        <p class="text-xs font-black text-blue-400">Blue</p>
+                        <p class="text-[9px] text-slate-300">Bot AI</p>
+                    </div>
+                    <!-- Blue Corner Dice -->
+                    <div id="dice-btn-3" class="mini-dice-btn" onclick="handleCornerDiceClick(3)">
+                        <div id="mini-dice-grid-3" class="mini-dice-grid"></div>
+                        <div id="dice-num-3" class="dice-num-badge">1</div>
+                    </div>
+                </div>
+
+                <!-- Player 3 (Yellow - Human) -->
+                <div id="player-card-2" class="player-corner-box flex items-center gap-2 border-yellow-500/60">
+                    <!-- Yellow Corner Dice -->
+                    <div id="dice-btn-2" class="mini-dice-btn" onclick="handleCornerDiceClick(2)">
+                        <div id="mini-dice-grid-2" class="mini-dice-grid"></div>
+                        <div id="dice-num-2" class="dice-num-badge">1</div>
+                    </div>
+                    <div class="ml-1 text-right">
+                        <p class="text-xs font-black text-yellow-400">Yellow</p>
+                        <p class="text-[9px] text-slate-300">Teammate</p>
+                    </div>
+                    <div class="relative">
+                        <div class="w-9 h-9 rounded-full bg-yellow-400 flex items-center justify-center font-black text-xs text-black shadow">
+                            P2
+                        </div>
+                        <span class="absolute -top-1 -left-1 bg-yellow-400 text-[8px] text-black font-extrabold px-1 rounded-full">YOU</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Status Bar -->
+            <div class="w-full bg-slate-800/95 rounded-2xl p-2.5 border border-slate-700 flex items-center justify-between shadow-lg mt-1">
+                <div>
+                    <p id="turnMsg" class="text-[10px] uppercase font-extrabold tracking-wider text-slate-400">Active Turn</p>
+                    <p id="turnPlayer" class="text-sm font-black text-blue-400">Blue Turn (Tap Dice)</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div id="rolledDisplayBox" class="text-xs font-extrabold bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-700 text-yellow-400">
+                        Rolled: <span id="currentRollVal" class="text-white font-black text-sm">1</span>
+                    </div>
+                    <!-- Reset Board Button -->
+                    <button onclick="resetGame()" class="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/40 px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all active:scale-95">
+                        <i class="fa-solid fa-rotate-right text-xs"></i> Reset
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quests & Shop Bar -->
+            <div class="w-full grid grid-cols-2 gap-2 mt-1">
+                <!-- Red Quests & Shop -->
+                <div class="bg-slate-900/90 border border-red-500/50 rounded-xl p-2 flex justify-between items-center text-xs">
+                    <div>
+                        <div class="flex items-center gap-1 font-black text-red-400 text-[11px]">
+                            <span>P1 Red</span>
+                            <span class="bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded-md border border-yellow-500/30 font-bold text-[10px]">
+                                <i class="fa-solid fa-coins"></i> <span id="redCoinsVal">50</span>
+                            </span>
+                        </div>
+                        <p class="text-[9px] text-slate-400" id="redQuestDesc">Quest: Roll a 6 (+50 coins)</p>
+                    </div>
+                    <button onclick="openShop(0)" class="bg-red-500 hover:bg-red-600 text-white font-black text-[10px] px-2.5 py-1 rounded-lg border border-red-400 shadow">
+                        Shop
+                    </button>
+                </div>
+
+                <!-- Yellow Quests & Shop -->
+                <div class="bg-slate-900/90 border border-yellow-500/50 rounded-xl p-2 flex justify-between items-center text-xs">
+                    <div>
+                        <div class="flex items-center gap-1 font-black text-yellow-400 text-[11px]">
+                            <span>P2 Yellow</span>
+                            <span class="bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded-md border border-yellow-500/30 font-bold text-[10px]">
+                                <i class="fa-solid fa-coins"></i> <span id="yellowCoinsVal">50</span>
+                            </span>
+                        </div>
+                        <p class="text-[9px] text-slate-400" id="yellowQuestDesc">Quest: Roll a 6 (+50 coins)</p>
+                    </div>
+                    <button onclick="openShop(2)" class="bg-yellow-500 hover:bg-yellow-600 text-black font-black text-[10px] px-2.5 py-1 rounded-lg border border-yellow-400 shadow">
+                        Shop
+                    </button>
+                </div>
+            </div>
+
+            <!-- Comprehensive Demo & Testing Panel -->
+            <div class="w-full bg-slate-900/95 rounded-xl p-2.5 border border-yellow-500/40 flex flex-col gap-1.5 text-center mt-1">
+                <p class="text-[10px] font-extrabold text-yellow-400 uppercase tracking-wider flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-flask"></i> Complete Demo & Rule Testing Panel
+                </p>
+                <div class="flex justify-center gap-1.5 flex-wrap">
+                    <button onclick="testScenario('red_vs_yellow')" class="bg-slate-800 hover:bg-slate-700 text-yellow-300 text-[9px] font-extrabold px-2 py-1 rounded border border-slate-600">
+                        ⚡ Red vs Yellow Safe (Stack)
+                    </button>
+                    <button onclick="testScenario('stack_demo')" class="bg-slate-800 hover:bg-slate-700 text-cyan-300 text-[9px] font-extrabold px-2 py-1 rounded border border-slate-600">
+                        🔍 Multi-Token Stack Demo
+                    </button>
+                    <button onclick="testScenario('red_vs_green')" class="bg-slate-800 hover:bg-slate-700 text-green-300 text-[9px] font-extrabold px-2 py-1 rounded border border-slate-600">
+                        ⚡ Red vs AI Kill
+                    </button>
+                    <button onclick="demoFinishMatch()" class="bg-purple-900/80 hover:bg-purple-800 text-purple-200 text-[9px] font-extrabold px-2 py-1 rounded border border-purple-500/50">
+                        🏆 Demo Match Finish
+                    </button>
+                    <button onclick="addDemoCoins()" class="bg-yellow-900/80 hover:bg-yellow-800 text-yellow-200 text-[9px] font-extrabold px-2 py-1 rounded border border-yellow-500/50">
+                        🪙 +100 Demo Coins
+                    </button>
+                </div>
+                <div class="flex justify-center items-center gap-1.5 mt-0.5">
+                    <span class="text-[9px] text-slate-400 font-bold">Force Dice:</span>
+                    <button onclick="forceRoll(1)" class="bg-slate-800 text-white text-[9px] font-bold px-2 py-0.5 rounded border border-slate-700">1</button>
+                    <button onclick="forceRoll(6)" class="bg-slate-800 text-yellow-400 text-[9px] font-bold px-2 py-0.5 rounded border border-slate-700">6</button>
+                    <span class="text-[9px] text-slate-400 font-bold ml-1">Force Turn:</span>
+                    <button onclick="forceTurn(3)" class="bg-blue-500/30 text-blue-300 text-[9px] font-bold px-1.5 py-0.5 rounded border border-blue-500/50">Blue</button>
+                    <button onclick="forceTurn(0)" class="bg-red-500/30 text-red-300 text-[9px] font-bold px-1.5 py-0.5 rounded border border-red-500/50">Red</button>
+                    <button onclick="forceTurn(1)" class="bg-green-500/30 text-green-300 text-[9px] font-bold px-1.5 py-0.5 rounded border border-green-500/50">Green</button>
+                    <button onclick="forceTurn(2)" class="bg-yellow-500/30 text-yellow-300 text-[9px] font-bold px-1.5 py-0.5 rounded border border-yellow-500/50">Yellow</button>
+                </div>
+            </div>
+
+        </main>
+    </div>
 
     <!-- Quests Shop Modal -->
     <div id="shopModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
@@ -470,6 +587,7 @@
                 <li><strong class="text-red-400">Red</strong> & <strong class="text-yellow-400">Yellow</strong> ek dusre ko <strong>NAHI uda sakte!</strong></li>
                 <li><strong class="text-red-400">Red</strong> & <strong class="text-yellow-400">Yellow</strong> sirf <strong>AI (Green & Blue)</strong> ko uda sakte hain.</li>
                 <li><strong class="text-green-400">AI (Green & Blue)</strong> sabhi ko uda sakte hain.</li>
+                <li><strong class="text-yellow-400">Stacked Tokens:</strong> Shown directly on the cell with color circles (e.g. Red & Yellow side-by-side)!</li>
                 <li>Apni corner wale dice box par tap karke dice roll karein!</li>
             </ul>
             <button id="closeRulesBtn" class="mt-4 w-full bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold py-2 rounded-xl text-xs">
@@ -877,7 +995,6 @@
             }
 
             gameState.playerData[pIndex].coins -= 50;
-            // Revive at exact location where it died (fallback to start cell 0 if never moved)
             deadPawn.pos = (deadPawn.lastDeathPos !== undefined && deadPawn.lastDeathPos >= 0) ? deadPawn.lastDeathPos : 0;
             updateQuestsUI();
             renderPawns();
@@ -892,7 +1009,7 @@
                 showToast(`It is ${PLAYERS[gameState.turn].name}'s turn!`);
                 return;
             }
-            if (PLAYERS[pIndex].isAI) return; // AI rolls automatically
+            if (PLAYERS[pIndex].isAI) return;
             rollDice();
         }
 
@@ -946,7 +1063,6 @@
                 showToast(`${PLAYERS[pIndex].name} rolled ${gameState.diceValue} - No move available.`);
                 setTimeout(nextTurn, 1000);
             } else if (PLAYERS[pIndex].isAI) {
-                // AI picks optimal pawn to move
                 setTimeout(() => {
                     let chosenPawn = moveablePawns[0];
                     for (let pIdx of moveablePawns) {
@@ -959,7 +1075,7 @@
                     onPawnClick(pIndex, chosenPawn);
                 }, 700);
             } else {
-                renderPawns(); // Highlight human movable pawns
+                renderPawns();
             }
         }
 
@@ -968,7 +1084,6 @@
             const currIdx = TURN_ORDER.indexOf(gameState.turn);
             gameState.turn = TURN_ORDER[(currIdx + 1) % TURN_ORDER.length];
 
-            // Skip players who have completed all pawns
             if (checkPlayerWin(gameState.turn)) {
                 nextTurn();
                 return;
@@ -993,12 +1108,58 @@
             return true;
         }
 
-        // Render Pawns on the board
-        function renderPawns() {
-            document.querySelectorAll('.pawn').forEach(e => e.remove());
+        // Helper to group cell tokens by color
+        function getCellTokenMap() {
+            const cellMap = {};
 
             gameState.pawns.forEach((playerPawns, pIndex) => {
                 playerPawns.forEach((pawn, pawnIdx) => {
+                    let key = null;
+                    if (pawn.pos === -1) {
+                        key = `base-${pIndex}-${pawnIdx}`;
+                    } else if (pawn.pos >= 0 && pawn.pos < 52) {
+                        const globalPos = (PLAYERS[pIndex].startCell + pawn.pos) % 52;
+                        const [r, c] = COMMON_PATH[globalPos];
+                        key = `cell-${r}-${c}`;
+                    } else if (pawn.pos >= 52 && pawn.pos < 57) {
+                        const homeStep = pawn.pos - 52;
+                        const [r, c] = HOME_PATHS[pIndex][homeStep];
+                        key = `cell-${r}-${c}`;
+                    }
+
+                    if (key) {
+                        if (!cellMap[key]) cellMap[key] = [];
+                        cellMap[key].push({ pIndex, pawnIdx, pawn });
+                    }
+                });
+            });
+
+            return cellMap;
+        }
+
+        // Render Pawns Directly on Board
+        function renderPawns() {
+            document.querySelectorAll('.pawn, .stack-flex-container').forEach(e => e.remove());
+
+            const cellMap = getCellTokenMap();
+
+            Object.entries(cellMap).forEach(([key, tokenList]) => {
+                let targetCell = null;
+
+                if (key.startsWith('base-')) {
+                    const [, pIdx, pawnIdx] = key.split('-');
+                    targetCell = document.getElementById(`base-spot-${pIdx}-${pawnIdx}`);
+                } else if (key.startsWith('cell-')) {
+                    const [, r, c] = key.split('-');
+                    targetCell = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+                }
+
+                if (!targetCell) return;
+
+                const stackCount = tokenList.length;
+
+                if (stackCount === 1) {
+                    const { pIndex, pawnIdx } = tokenList[0];
                     const pawnEl = document.createElement('div');
                     pawnEl.className = `pawn`;
                     pawnEl.style.backgroundColor = PLAYERS[pIndex].color;
@@ -1012,28 +1173,100 @@
                         onPawnClick(pIndex, pawnIdx);
                     };
 
-                    let targetCell = null;
+                    targetCell.appendChild(pawnEl);
+                } else {
+                    const container = document.createElement('div');
+                    container.className = 'stack-flex-container';
 
-                    if (pawn.pos === -1) {
-                        targetCell = document.getElementById(`base-spot-${pIndex}-${pawnIdx}`);
-                    } else if (pawn.pos >= 0 && pawn.pos < 52) {
-                        const globalPos = (PLAYERS[pIndex].startCell + pawn.pos) % 52;
-                        const [r, c] = COMMON_PATH[globalPos];
-                        targetCell = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
-                    } else if (pawn.pos >= 52 && pawn.pos < 57) {
-                        const homeStep = pawn.pos - 52;
-                        const [r, c] = HOME_PATHS[pIndex][homeStep];
-                        targetCell = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
-                    }
+                    const groupedByPlayer = {};
+                    tokenList.forEach(item => {
+                        if (!groupedByPlayer[item.pIndex]) groupedByPlayer[item.pIndex] = [];
+                        groupedByPlayer[item.pIndex].push(item);
+                    });
 
-                    if (targetCell) {
-                        targetCell.appendChild(pawnEl);
-                    }
-                });
+                    const playerIndices = Object.keys(groupedByPlayer);
+                    
+                    playerIndices.forEach(pIdxStr => {
+                        const pIdx = parseInt(pIdxStr);
+                        const playerTokens = groupedByPlayer[pIdx];
+                        
+                        let selectedPawnIdx = playerTokens[0].pawnIdx;
+                        let hasMovable = false;
+
+                        for (let t of playerTokens) {
+                            if (gameState.turn === pIdx && gameState.hasRolled && canPawnMove(pIdx, t.pawnIdx, gameState.diceValue)) {
+                                selectedPawnIdx = t.pawnIdx;
+                                hasMovable = true;
+                                break;
+                            }
+                        }
+
+                        const micro = document.createElement('div');
+                        micro.className = 'micro-token';
+                        micro.style.backgroundColor = PLAYERS[pIdx].color;
+
+                        if (hasMovable) {
+                            micro.classList.add('can-move');
+                        }
+
+                        if (playerTokens.length > 1) {
+                            const countBadge = document.createElement('div');
+                            countBadge.className = 'micro-count-badge';
+                            countBadge.textContent = playerTokens.length;
+                            micro.appendChild(countBadge);
+                        }
+
+                        micro.onclick = (e) => {
+                            e.stopPropagation();
+                            onPawnClick(pIdx, selectedPawnIdx);
+                        };
+
+                        container.appendChild(micro);
+                    });
+
+                    targetCell.appendChild(container);
+                }
             });
         }
 
-        // Step-by-Step Animated Pawn Movement & Custom Rules Check
+        // Loading Screen & Menu Navigation Flow
+        function initAppFlow() {
+            const introProgressBar = document.getElementById('introProgressBar');
+            let progress = 0;
+            
+            const interval = setInterval(() => {
+                progress += 25;
+                if (introProgressBar) introProgressBar.style.width = `${progress}%`;
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        document.getElementById('introLoadingScreen').classList.add('screen-hidden');
+                        document.getElementById('mainMenuScreen').classList.remove('screen-hidden');
+                    }, 400);
+                }
+            }, 180);
+        }
+
+        function startGameFromMenu() {
+            document.getElementById('mainMenuScreen').classList.add('screen-hidden');
+            sound.init();
+            sound.startMelody();
+            showToast("Game Started! Good Luck Duo Team!");
+            if (PLAYERS[3].isAI && !gameState.hasRolled) {
+                setTimeout(rollDice, 1000);
+            }
+        }
+
+        function returnToMenu() {
+            document.getElementById('mainMenuScreen').classList.remove('screen-hidden');
+        }
+
+        function openRulesFromMenu() {
+            document.getElementById('rulesModal').classList.remove('hidden');
+        }
+
+        // Step-by-Step Smooth Animated Pawn Movement & Rules
         async function onPawnClick(pIndex, pawnIdx) {
             if (gameState.turn !== pIndex || !gameState.hasRolled) return;
             if (!canPawnMove(pIndex, pawnIdx, gameState.diceValue)) return;
@@ -1045,14 +1278,14 @@
                 pawn.pos = 0;
                 sound.playMoveSound();
                 renderPawns();
-                await new Promise(res => setTimeout(res, 200));
+                await new Promise(res => setTimeout(res, 180));
             } else {
                 const steps = gameState.diceValue;
                 for (let s = 0; s < steps; s++) {
                     pawn.pos += 1;
                     sound.playMoveSound();
                     renderPawns();
-                    await new Promise(res => setTimeout(res, 220));
+                    await new Promise(res => setTimeout(res, 190));
                 }
             }
 
@@ -1075,9 +1308,8 @@
 
                                 if (myGlobalPos === otherGlobalPos) {
                                     if (isRedYellowPair) {
-                                        showToast(`Teammate Safe! Red & Yellow cannot kill each other.`);
+                                        showToast(`Teammate Safe! Red & Yellow stacked together.`);
                                     } else {
-                                        // Store exact position where pawn died before sending back home
                                         otherPawn.lastDeathPos = otherPawn.pos;
                                         otherPawn.pos = -1;
                                         sound.playKillSound();
@@ -1123,7 +1355,7 @@
                 showToast(`${PLAYERS[pIndex].name} gets another turn!`);
                 updateTurnUI();
                 if (PLAYERS[pIndex].isAI) {
-                    setTimeout(rollDice, 700);
+                    setTimeout(rollDice, 600);
                 }
             } else {
                 nextTurn();
@@ -1170,7 +1402,7 @@
 
         function resetGame() {
             gameState.rankings = [];
-            gameState.turn = 3; // Reset to Blue start
+            gameState.turn = 3;
             gameState.hasRolled = false;
             gameState.isRolling = false;
             gameState.pawns = [
@@ -1191,17 +1423,27 @@
         // Test Scenario Helper
         function testScenario(type) {
             if (type === 'red_vs_yellow') {
-                gameState.pawns[0][0].pos = 2; // Red at cell 2
-                gameState.pawns[2][0].pos = 28; // Yellow at global cell 3 (28 - 26)
+                gameState.pawns[0][0].pos = 2;
+                gameState.pawns[2][0].pos = 28;
                 gameState.turn = 0;
                 gameState.diceValue = 1;
                 gameState.hasRolled = true;
                 updateTurnUI();
                 renderPawns();
                 showToast("⚡ Test Set: Tap Red Pawn to step on Yellow!");
+            } else if (type === 'stack_demo') {
+                gameState.pawns[0][0].pos = 0;
+                gameState.pawns[0][1].pos = 0;
+                gameState.pawns[2][0].pos = 26;
+                gameState.pawns[3][0].pos = 13;
+                gameState.turn = 0;
+                gameState.hasRolled = false;
+                updateTurnUI();
+                renderPawns();
+                showToast("🔍 Direct Stack Demo created! Red & Yellow shown side-by-side!");
             } else if (type === 'red_vs_green') {
-                gameState.pawns[0][0].pos = 2; // Red at cell 2
-                gameState.pawns[1][0].pos = 42; // Green AI at global cell 3
+                gameState.pawns[0][0].pos = 2;
+                gameState.pawns[1][0].pos = 42;
                 gameState.turn = 0;
                 gameState.diceValue = 1;
                 gameState.hasRolled = true;
@@ -1267,7 +1509,9 @@
             updateQuestsUI();
             renderPawns();
             for (let i = 0; i < 4; i++) renderDiceDots(i, 1);
-            if (PLAYERS[3].isAI) setTimeout(rollDice, 1000);
+            
+            // Start Flow: Loading Screen -> Main Menu
+            initAppFlow();
 
             // Event Listeners
             rulesBtn.addEventListener('click', () => rulesModal.classList.remove('hidden'));
