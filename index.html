@@ -17,9 +17,12 @@
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: #0f172a;
-            background-image: radial-gradient(#1e293b 2px, transparent 2px);
-            background-size: 20px 20px;
+            background: #1e3a8a;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.5) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(30, 64, 175, 0.8) 0%, transparent 50%),
+                repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.03) 0px, rgba(255, 255, 255, 0.03) 2px, transparent 2px, transparent 20px);
+            background-size: cover;
             touch-action: manipulation;
             overflow-x: hidden;
         }
@@ -70,6 +73,12 @@
             justify-content: center;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
             position: relative;
+        }
+
+        /* House home base tokens styling with white interior matching Ludo King */
+        .home-circle-spot .pawn {
+            width: 90%;
+            height: 90%;
         }
 
         /* Center Triangles */
@@ -204,11 +213,10 @@
             z-index: 2;
         }
 
-        /* Pawns Style */
+        /* Map Pin / Location Marker Tokens Style */
         .pawn {
-            width: 78%;
-            height: 78%;
-            border-radius: 50%;
+            width: 85%;
+            height: 85%;
             position: absolute;
             z-index: 25;
             cursor: pointer;
@@ -216,28 +224,61 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.4), inset 0 3px 3px rgba(255,255,255,0.7);
-            border: 2px solid #ffffff;
+            filter: drop-shadow(0 3px 4px rgba(0,0,0,0.45));
             will-change: transform, top, left;
         }
 
-        .pawn::after {
+        .pawn-pin-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2.5px solid #ffffff;
+            box-shadow: inset 0 0 0 2.5px rgba(255, 255, 255, 0.9), inset 0 2px 4px rgba(255,255,255,0.6), 0 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            background-color: #ffffff; /* White inside tokens background */
+        }
+
+        .pawn-pin-inner::after {
             content: '';
-            width: 36%;
-            height: 36%;
+            width: 38%;
+            height: 38%;
             border-radius: 50%;
-            background-color: rgba(255,255,255,0.85);
+            background-color: currentColor; /* Matches token color outline */
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+            border: 1px solid rgba(0,0,0,0.15);
+        }
+
+        /* Ludo King Tire / Shadow Effect underneath moving tokens */
+        .pawn-moving-tire {
+            position: absolute;
+            bottom: -4px;
+            width: 70%;
+            height: 12px;
+            background: radial-gradient(ellipse at center, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);
+            border-radius: 50%;
+            animation: tirePulse 0.2s infinite alternate;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        @keyframes tirePulse {
+            0% { transform: scale(0.9); opacity: 0.7; }
+            100% { transform: scale(1.15); opacity: 1; }
         }
 
         .pawn.can-move {
             animation: pulseGlow 0.6s infinite alternate;
             z-index: 35;
-            border: 2px solid #fbbf24;
+            filter: drop-shadow(0 0 8px #fbbf24);
         }
 
         @keyframes pulseGlow {
-            0% { transform: scale(1); filter: drop-shadow(0 0 4px #eab308); }
-            100% { transform: scale(1.22); filter: drop-shadow(0 0 10px #f59e0b); }
+            0% { transform: scale(1); }
+            100% { transform: scale(1.25); }
         }
 
         /* Direct On-Cell Stack Tokens Container */
@@ -253,11 +294,12 @@
         }
 
         .micro-token {
-            width: 48%;
-            height: 48%;
-            border-radius: 50%;
-            border: 1.5px solid #ffffff;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            width: 52%;
+            height: 52%;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            border: 2px solid #ffffff;
+            box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.9), 0 2px 4px rgba(0,0,0,0.5);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -267,8 +309,17 @@
             transition: transform 0.15s ease, filter 0.15s;
         }
 
+        .micro-token::after {
+            content: '';
+            width: 36%;
+            height: 36%;
+            border-radius: 50%;
+            background-color: #ffffff;
+            border: 1px solid rgba(0,0,0,0.15);
+        }
+
         .micro-token:hover {
-            transform: scale(1.2);
+            transform: rotate(-45deg) scale(1.25);
             z-index: 40;
         }
 
@@ -279,8 +330,8 @@
 
         .micro-count-badge {
             position: absolute;
-            top: -5px;
-            right: -5px;
+            top: -2px;
+            right: -2px;
             background: #0f172a;
             color: #ffffff;
             font-size: 8px;
@@ -293,6 +344,7 @@
             justify-content: center;
             border: 1px solid rgba(255,255,255,0.8);
             box-shadow: 0 1px 3px rgba(0,0,0,0.6);
+            transform: rotate(45deg); /* Counter rotate badge so text is upright */
         }
 
         /* Smooth Screen Transitions */
@@ -622,7 +674,7 @@
     </div>
 
     <script>
-        // Audio Synthesizer Engine
+        // Audio Synthesizer Engine with Ludo King Sound Effects
         class SoundEngine {
             constructor() {
                 this.ctx = null;
@@ -673,37 +725,81 @@
                 }, 400);
             }
 
+            // Authentic Ludo King Dice Rolling Shaking Sound Effect
             playDiceSound() {
                 this.init();
                 const now = this.ctx.currentTime;
-                for (let i = 0; i < 5; i++) {
+                for (let i = 0; i < 8; i++) {
                     const osc = this.ctx.createOscillator();
                     const gain = this.ctx.createGain();
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(150 + Math.random() * 150, now + i * 0.04);
-                    gain.gain.setValueAtTime(0.25, now + i * 0.04);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.04 + 0.035);
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(200 + Math.random() * 350, now + i * 0.05);
+                    gain.gain.setValueAtTime(0.12, now + i * 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.005, now + i * 0.05 + 0.04);
                     osc.connect(gain);
                     gain.connect(this.ctx.destination);
-                    osc.start(now + i * 0.04);
-                    osc.stop(now + i * 0.04 + 0.04);
+                    osc.start(now + i * 0.05);
+                    osc.stop(now + i * 0.05 + 0.04);
                 }
             }
 
+            // Authentic Ludo King Token Movement Hop Sound Effect (Wood/Plastic Tap)
             playMoveSound() {
                 this.init();
                 const now = this.ctx.currentTime;
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(440, now);
-                osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
-                gain.gain.setValueAtTime(0.2, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(320, now);
+                osc.frequency.exponentialRampToValueAtTime(640, now + 0.06);
+
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.005, now + 0.07);
+
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
+
                 osc.start(now);
-                osc.stop(now + 0.08);
+                osc.stop(now + 0.07);
+            }
+
+            // Safe Star Tile Sound Effect
+            playStarSound() {
+                this.init();
+                const now = this.ctx.currentTime;
+                const notes = [587.33, 880.00, 1174.66];
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+                    gain.gain.setValueAtTime(0.2, now + idx * 0.06);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.06 + 0.15);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.06);
+                    osc.stop(now + idx * 0.06 + 0.15);
+                });
+            }
+
+            // Treasure / Quest Coin Collection Sound Effect
+            playCoinSound() {
+                this.init();
+                const now = this.ctx.currentTime;
+                const notes = [987.77, 1318.51];
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                    gain.gain.setValueAtTime(0.25, now + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.08 + 0.18);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.08);
+                    osc.stop(now + idx * 0.08 + 0.18);
+                });
             }
 
             playKillSound() {
@@ -966,6 +1062,7 @@
                 const reward = QUEST_LIST[currentStep].reward;
                 gameState.playerData[pIndex].coins += reward;
                 gameState.playerData[pIndex].questStep += 1;
+                sound.playCoinSound();
                 showToast(`🎉 ${PLAYERS[pIndex].name} Completed Quest! +${reward} Coins!`);
                 updateQuestsUI();
             }
@@ -1137,7 +1234,7 @@
             return cellMap;
         }
 
-        // Render Pawns Directly on Board
+        // Render Pawns Directly on Board with Tire Shadow effect & side-by-side stack tokens
         function renderPawns() {
             document.querySelectorAll('.pawn, .stack-flex-container').forEach(e => e.remove());
 
@@ -1162,7 +1259,18 @@
                     const { pIndex, pawnIdx } = tokenList[0];
                     const pawnEl = document.createElement('div');
                     pawnEl.className = `pawn`;
-                    pawnEl.style.backgroundColor = PLAYERS[pIndex].color;
+
+                    const pinInner = document.createElement('div');
+                    pinInner.className = 'pawn-pin-inner';
+                    pinInner.style.color = PLAYERS[pIndex].color; // Sets inner dot color via currentColor
+                    pinInner.style.borderColor = PLAYERS[pIndex].color;
+                    pinInner.style.backgroundColor = '#ffffff'; // White inside tokens outline
+
+                    pawnEl.appendChild(pinInner);
+
+                    const tire = document.createElement('div');
+                    tire.className = 'pawn-moving-tire';
+                    pawnEl.appendChild(tire);
 
                     if (gameState.turn === pIndex && gameState.hasRolled && canPawnMove(pIndex, pawnIdx, gameState.diceValue)) {
                         pawnEl.classList.add('can-move');
@@ -1291,6 +1399,15 @@
 
             gameState.isRolling = false;
             let bonusTurn = (gameState.diceValue === 6);
+
+            // Check if landed on Safe Star tile
+            if (pawn.pos >= 0 && pawn.pos < 52) {
+                const myGlobalPos = (PLAYERS[pIndex].startCell + pawn.pos) % 52;
+                if (SAFE_POSITIONS.includes(myGlobalPos)) {
+                    sound.playStarSound();
+                    showToast(`⭐ ${PLAYERS[pIndex].name} reached Safe Star!`);
+                }
+            }
 
             // Capture logic
             if (pawn.pos >= 0 && pawn.pos < 52) {
